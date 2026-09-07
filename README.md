@@ -109,8 +109,9 @@ decodes errors inline. UI is PT/EN.
 - **[How torque control works](docs/TORQUE_CONTROL.md)** — deep dive
   into the FFB pipeline from Nm demand to motor current. Explains why
   `pos_gain` / `vel_gain` are inert in TORQUE mode.
-- **[Tuning feeling (PT/EN)](docs/TUNING_FEELING.md)** — post-setup
-  guide for shaping the FFB chain: gains, filters, end-stop, EQ.
+- **[Tuning feeling](docs/TUNING_FEELING.md)**
+  ([PT](docs/TUNING_FEELING_PT.md)) — post-setup guide for shaping the
+  FFB chain: gains, filters, end-stop, EQ.
 - **[Building from source](docs/BUILDING.md)** — for when you want to
   modify the firmware, sync with upstream OpenFFBoard, or investigate a
   build issue.

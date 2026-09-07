@@ -1,352 +1,354 @@
-# Tutorial — Ajustando o feeling do volante
+# Tutorial — Tuning the wheel feeling
 
-Guia prático pra tunar o "feel" do volante usando as ferramentas integradas — do Performance Test, passando pelos filtros do motor (CF/Damper/Friction/Inertia) e terminando nos efeitos FFB que o jogo manda (Constant Force, Spring, Damper, Friction).
+<sub>🇧🇷 [Ler em português](TUNING_FEELING_PT.md)</sub>
+
+Practical guide to tune the wheel "feel" using the built-in tools — from Performance Test, through the motor filters (CF/Damper/Friction/Inertia) and ending on the FFB effects the game sends (Constant Force, Spring, Damper, Friction).
 
 ---
 
-## Visão geral
+## Overview
 
-Tunar feeling de volante é resolver **3 problemas em camadas**, do mais baixo nível ao mais alto:
+Tuning wheel feeling is solving **3 layered problems**, from lowest to highest level:
 
-| Camada | Problema | Ferramentas |
+| Layer | Problem | Tools |
 |---|---|---|
-| **1. Hardware** | Quanto o motor entrega? | Performance Test |
-| **2. Controle interno** | Filtros bem cortados? | Coastdown, FFB Filters, Frequency Sweep |
-| **3. Efeitos do jogo** | Sensações certas chegando na mão? | Constant Force / Spring / Damper / Friction gains |
+| **1. Hardware** | How much does the motor deliver? | Performance Test |
+| **2. Internal control** | Filters cleanly tuned? | Coastdown, FFB Filters, Frequency Sweep |
+| **3. Game effects** | Right sensations reaching your hands? | Constant Force / Spring / Damper / Friction gains |
 
-Tunar de cima pra baixo (começar pelos efeitos do jogo) é frustrante porque você fica brigando com problemas das camadas inferiores. Comece pela base: caracterize o hardware, estabilize o controle, configure os filtros — e quando você chegar nos efeitos, o ajuste é só "menos ou mais", não "por que está vibrando?".
+Tuning top-down (starting from game effects) is frustrating because you end up fighting issues in the lower layers. Start at the base: characterize the hardware, stabilize the control, configure the filters — and when you get to the effects, the adjustment is just "less or more", not "why is it vibrating?".
 
-> ⚠️ **Realidade prática dos jogos de corrida**
+> ⚠️ **Practical reality of racing games**
 >
-> A esmagadora maioria dos sims de corrida (iRacing, ACC, AMS2, BeamNG, rFactor 2, Le Mans Ultimate) **só envia Constant Force** pelo USB FFB. Não usam Spring, Damper, Friction nem Inertia — essas forças são simuladas dentro da CF.
+> The vast majority of racing sims (iRacing, ACC, AMS2, BeamNG, rFactor 2, Le Mans Ultimate) **only send Constant Force** over USB FFB. They don't use Spring, Damper, Friction or Inertia — those forces are simulated inside the CF.
 >
-> Implicações:
-> - **Ajustar o filtro CF importa muito.** É o que pega 100% do sinal do jogo.
-> - **Ajustar filtros de Damper/Friction/Inertia só faz sentido** se você habilitar esses efeitos **manualmente** na aba FFB Wheel (eles entram em paralelo com a CF do jogo).
+> Implications:
+> - **Tuning the CF filter matters a lot.** It captures 100% of the game's signal.
+> - **Tuning Damper/Friction/Inertia filters only makes sense** if you enable those effects **manually** in the FFB Wheel tab (they run in parallel with the game's CF).
 >
-> **Como saber o que o seu jogo está enviando:** aba **FFB Live** → painel **`Efeitos ativos`**. Mostra até 3 effect slots ativos com `type` (Constant / Spring / Damper / Periodic / Friction / Inertia), `state`, `magnitude` e `gain`. Em sim de corrida moderno você vai ver **apenas 1 slot ativo, com type = Constant Force** — confirmando que o jogo só envia CF.
+> **How to know what your game is sending:** **FFB Live** tab → **`Active effects`** panel. Shows up to 3 active effect slots with `type` (Constant / Spring / Damper / Periodic / Friction / Inertia), `state`, `magnitude`, and `gain`. In a modern racing sim you'll see **only 1 active slot, with type = Constant Force** — confirming the game only sends CF.
 
 ---
 
-## Pré-requisitos
+## Prerequisites
 
-Antes de começar este tutorial:
+Before starting this tutorial:
 
-- ✅ Quick Start completo (motor calibrado, encoder OK, FFB configurado)
+- ✅ Quick Start complete (motor calibrated, encoder OK, FFB configured)
 ---
 
-## Passo 1 — Performance Test (caracterizar o motor)
+## Step 1 — Performance Test (characterize the motor)
 
-**Por que primeiro:** todos os outros passos usam os números que esse teste mede.
+**Why first:** every other step uses the numbers this test measures.
 
-### O que faz
+### What it does
 
-Aplica CF até saturação, deixa o motor acelerar livremente até o batente, captura tudo via HID a 1 kHz. Calcula:
+Applies CF up to saturation, lets the motor accelerate freely until the endstop, captures everything via HID at 1 kHz. Computes:
 
-| Métrica | O que significa | Pra que serve depois |
+| Metric | What it means | What it's used for later |
 |---|---|---|
-| `peakRPM` | RPM pico atingida | Limite real da sua chain mecânica |
-| `peakAccel` | Aceleração máxima (RPM/s) | Sanity check de J |
-| `J_kgm2` | Inércia equivalente | Entra em **toda** a math dos filtros |
-| `breakawayPct` | % CF pra wheel sair do lugar | Fricção estática (stiction) |
-| `iqMax` | Iq máximo medido | Confirma se motor saturou |
-| `iqSat%` | % do tempo em saturação | Headroom de torque |
+| `peakRPM` | Peak RPM reached | Real limit of your mechanical chain |
+| `peakAccel` | Max acceleration (RPM/s) | Sanity check for J |
+| `J_kgm2` | Equivalent inertia | Enters into **all** of the filter math |
+| `breakawayPct` | % CF for the wheel to start moving | Static friction (stiction) |
+| `iqMax` | Max measured Iq | Confirms whether motor saturated |
+| `iqSat%` | % of time in saturation | Torque headroom |
 
-### Como rodar
+### How to run
 
-1. Aba **Performance Test**
-2. Clica `▶ Iniciar` (HID conecta sozinho na primeira vez via popup do browser)
-3. Confirma o aviso de segurança
-4. Motor centraliza → empurra até o batente → libera → rampeia → mede
-5. Resultado aparece em ~10 segundos
+1. **Performance Test** tab
+2. Click `▶ Start` (HID auto-connects the first time via browser popup)
+3. Confirm the safety prompt
+4. Motor centers → pushes to endstop → releases → ramps → measures
+5. Result shows up in ~10 seconds
 
-### Como interpretar
+### How to interpret
 
-- **J alto (> 0.005 kg·m²)** = wheel pesado/grande → use bandwidth de filtro mais conservador (menor exemplo 30 a 50Hz)
-- **J baixo (< 0.001 kg·m²)** = wheel leve/pequeno → bandwidth pode ser mais agressivo (exemplo acima de 80Hz)
-- **iqSat% > 30%** = motor saturando muito → considere current_lim maior, fxratio menor, ou motor mais potente
-- **breakawayPct > 15%** = stiction alta → encoder com folga ou mancal duro; afeta capacidade do anti-cogging (futuro) e do feeling em movimentos lentos
+- **High J (> 0.005 kg·m²)** = heavy/large wheel → use a more conservative filter bandwidth (lower — example 30 to 50 Hz)
+- **Low J (< 0.001 kg·m²)** = light/small wheel → bandwidth can be more aggressive (example above 80 Hz)
+- **iqSat% > 30%** = motor saturating too much → consider higher current_lim, lower fxratio, or a more powerful motor
+- **breakawayPct > 15%** = high stiction → encoder with play or stiff bearing; affects anti-cogging quality (future) and feel during slow movements
 
-### Quando refazer
+### When to redo
 
-- Mudou mecânica (volante, shaft, mancais)
-- Trocou motor
-- Mudou `current_lim` ou `maxtorque`
+- Mechanics changed (wheel, shaft, bearings)
+- Motor swapped
+- Changed `current_lim` or `maxtorque`
 
-Resultado é salvo automaticamente no `motorCal` (localStorage).
+Result is saved automatically to `motorCal` (localStorage).
 
 ---
 
-## Passo 2 — Coastdown (medir atrito viscoso)
+## Step 2 — Coastdown (measure viscous friction)
 
-**Por que importa:** o atrito viscoso `b` (Nm·s/rad) é o que **freia naturalmente** o volante quando você solta. Junto com `J`, define o pólo mecânico do sistema:
+**Why it matters:** viscous friction `b` (Nm·s/rad) is what **naturally brakes** the wheel when you let go. Together with `J`, it defines the mechanical pole of the system:
 
 ```
 f_c_mec = b / (2π · J)
 ```
 
-Esse pólo é a base pra escolher cutoff dos filtros (regra prática: filtro acima de **10 × f_c_mec**).
+This pole is the basis for choosing filter cutoffs (rule of thumb: filter above **10 × f_c_mec**).
 
-### Como rodar
+### How to run
 
-1. Aba **Performance Test**, role até a seção `🌀 Coastdown test`
-2. Clica `▶ Iniciar`
-3. Motor faz spin-up até velocidade alvo, mantém, depois **libera** — você vê a velocidade decair naturalmente
-4. Resultado: `b_visc` (Nm·s/rad), `tau` (constante de tempo)
+1. **Performance Test** tab, scroll to the `🌀 Coastdown test` section
+2. Click `▶ Start`
+3. Motor spins up to target velocity, holds, then **releases** — you see velocity decay naturally
+4. Result: `b_visc` (Nm·s/rad), `tau` (time constant)
 
-### Como interpretar
+### How to interpret
 
-- **b alto** → wheel "freia sozinho" rápido → tem amortecimento natural alto
-- **b baixo** → wheel coast forever → precisa de damper artificial no FFB chain
-- **τ longo (> 5s)** → wheel "fluida", boa pra alto realism
-- **τ curto (< 1s)** → wheel "pesada/atritada", responde mas perde inércia rápido
+- **High b** → wheel "brakes itself" quickly → has high natural damping
+- **Low b** → wheel coasts forever → needs artificial damper in the FFB chain
+- **Long τ (> 5s)** → "fluid" wheel, good for high realism
+- **Short τ (< 1s)** → "heavy/rubbed" wheel, responsive but loses inertia fast
 
 ---
 
-## Passo 3 — Filtros do FFB chain
+## Step 3 — FFB chain filters
 
-Aqui é onde a maior parte do feeling é definida. O FFB chain processa o torque do jogo através de **4 filtros**:
+This is where most of the feeling is defined. The FFB chain processes the game's torque through **4 filters**:
 
 ```
-Game registra Constant Force  ─→ [filtro CF] ──────┐
-Game registra Damper          ─→ [filtro Damper] ──┤
-Game registra Friction        ─→ [filtro Friction] ┼─→ SOMA → × gain × fxratio → Motor
-Game registra Inertia         ─→ [filtro Inertia] ─┤
-Game registra Spring          ─→ (sem biquad próprio)─┘
+Game registers Constant Force ─→ [CF filter] ──────┐
+Game registers Damper         ─→ [Damper filter] ──┤
+Game registers Friction       ─→ [Friction filter] ┼─→ SUM → × gain × fxratio → Motor
+Game registers Inertia        ─→ [Inertia filter] ─┤
+Game registers Spring         ─→ (no dedicated biquad)─┘
 ```
 
-Cada filtro tem `Freq` (cutoff em Hz) e `Q` (fator de qualidade — quão "ressonante" o filtro é).
+Each filter has `Freq` (cutoff in Hz) and `Q` (quality factor — how "resonant" the filter is).
 
-### Princípios
+### Principles
 
-| Filtro | O que faz | Importa pra... |
+| Filter | What it does | Matters for... |
 |---|---|---|
-| **CF (Constant Force)** ⭐ | Passa-baixa principal — limita ruído de alta freq do jogo | **TODO sim de corrida** — único filtro que sempre atua, porque CF é o único efeito que o jogo manda |
-| **Damper** | Filtra o Damper effect | Só **efeitos Damper adicionados manualmente** na aba FFB Wheel ou jogos antigos que usam Damper effect |
-| **Friction** | Filtra o Friction effect | Só **efeitos Friction adicionados manualmente** ou jogos que usam |
-| **Inertia** | Filtra o Inertia effect | Raríssimo — quase nenhum jogo usa |
+| **CF (Constant Force)** ⭐ | Main low-pass — limits high-frequency noise from the game | **EVERY racing sim** — only filter that always acts, because CF is the only effect the game sends |
+| **Damper** | Filters the Damper effect | Only **Damper effects added manually** in the FFB Wheel tab, or old games that use Damper effect |
+| **Friction** | Filters the Friction effect | Only **Friction effects added manually** or games that use it |
+| **Inertia** | Filters the Inertia effect | Extremely rare — almost no game uses it |
 
-> Como sim de corrida moderno só manda CF, **na prática CF é o único filtro que importa pra ajustar**. Os outros filtros só viram relevantes se você habilitar Damper/Friction/Inertia manualmente na aba FFB Wheel (efeitos do firmware, em paralelo ao CF do jogo).
+> Since modern racing sims only send CF, **in practice CF is the only filter that matters to tune**. The other filters only become relevant if you enable Damper/Friction/Inertia manually in the FFB Wheel tab (firmware effects, parallel to the game's CF).
 
-### Onde mexer
+### Where to tune
 
-Aba **FFB Filters** mostra os 4 cards com sliders de Freq e Q. Cada um tem o gráfico de resposta em frequência atualizando ao vivo.
+The **FFB Filters** tab shows 4 cards with Freq and Q sliders. Each has a frequency response chart updating live.
 
-### Como escolher CF (o mais importante)
+### How to choose CF (the most important)
 
-A aba Performance Test, no card **💡 Análise e sugestões**, usa J e b pra computar e sugerir um valor:
+The Performance Test tab, in the **💡 Analysis and suggestions** card, uses J and b to compute and suggest a value:
 
 ```
-Pólo mecânico  f_c_mec = b / (2π · J)
-Pólo elétrico  f_LR    = R_phase / (2π · L_phase)
-CF sugerido    entre 10 × f_c_mec  e  0.8 × f_LR     (clamp 20–100 Hz)
+Mechanical pole  f_c_mec = b / (2π · J)
+Electrical pole  f_LR    = R_phase / (2π · L_phase)
+Suggested CF     between 10 × f_c_mec  and  0.8 × f_LR     (clamp 20–100 Hz)
 ```
 
-A faixa **10×f_c_mec até 0.8×f_LR** é onde o motor responde bem (acima do pólo mecânico) mas o controle de corrente ainda dá conta (abaixo do pólo elétrico).
+The range **10×f_c_mec up to 0.8×f_LR** is where the motor responds well (above the mechanical pole) but the current control still keeps up (below the electrical pole).
 
-Caso típico de wheel sim racing:
+Typical sim racing wheel case:
 - `J ≈ 0.002 kg·m²`, `b ≈ 0.0001 Nm·s/rad` → `f_c_mec ≈ 0.008 Hz`
 - `R = 0.1 Ω`, `L = 0.0001 H` → `f_LR ≈ 159 Hz`
-- Range: `~0.08 Hz a 127 Hz` → CF típico **~60 Hz** (clamp em 100)
+- Range: `~0.08 Hz to 127 Hz` → typical CF **~60 Hz** (clamped at 100)
 
-### Como escolher Damper / Friction / Inertia
+### How to choose Damper / Friction / Inertia
 
-Em sim de corrida moderno: **deixa nos defaults**. Esses filtros só processam efeitos que **não estão sendo enviados**. Mexer neles é mexer em algo que não acontece.
+In modern racing sim: **leave at defaults**. These filters only process effects that **are not being sent**. Tuning them is tuning something that doesn't happen.
 
-Cenários em que ajustar **faz sentido**:
+Scenarios where adjusting **makes sense**:
 
-1. **Você habilita Damper manualmente na aba FFB Wheel** pra dar "peso" extra que o jogo não dá → aí o filtro Damper passa a importar. Recomendação: cutoff 30–50 Hz, Q 0.7.
-2. **Você habilita Friction manualmente** pra simular volante "pesado" sem velocidade → filtro Friction importa. Mesmo range.
-3. **Joga sim antigo ou flight sim** que usa Damper/Friction effects separados → todos os filtros importam.
+1. **You enable Damper manually in the FFB Wheel tab** to add extra "weight" the game doesn't give → then the Damper filter starts to matter. Recommendation: cutoff 30–50 Hz, Q 0.7.
+2. **You enable Friction manually** to simulate a "heavy" wheel without velocity → Friction filter matters. Same range.
+3. **You play an old sim or flight sim** that uses separate Damper/Friction effects → all filters matter.
 
-A maior parte do feeling vem do **CF + gain do efeito CF no jogo**. Os outros são acessórios.
+Most of the feel comes from **CF + the game's CF effect gain**. The others are accessories.
 
-### Quick reference Q
+### Q quick reference
 
-| Q | Comportamento | Quando usar |
+| Q | Behavior | When to use |
 |---|---|---|
-| 0.5 | Subdamped — corta sem overshoot | Conservador, recomendado |
-| 0.707 | Butterworth — flat até cutoff | Default ideal |
-| 1.0 | Underdamped — pequeno bump em cutoff | Realça frequências perto do cutoff |
-| 2.0+ | Resonante — bump grande | Cuidado, pode oscilar |
+| 0.5 | Subdamped — cuts without overshoot | Conservative, recommended |
+| 0.707 | Butterworth — flat up to cutoff | Ideal default |
+| 1.0 | Underdamped — small bump at cutoff | Highlights frequencies near cutoff |
+| 2.0+ | Resonant — large bump | Careful, can oscillate |
 
 ---
 
-## Passo 4 — Validar com Frequency Sweep
+## Step 4 — Validate with Frequency Sweep
 
-Configurou os filtros? Hora de testar se a chain real bate com a teoria.
+Configured the filters? Time to test if the real chain matches the theory.
 
-### Como rodar
+### How to run
 
-1. Aba **Performance Test**, role até `📊 Frequency Sweep test`
-2. Escolhe modo:
-   - **Full sweep** — com efeitos ativos (mede a chain inteira como vai funcionar no jogo)
-   - **Natural response only** — zera os efeitos (mede só motor + mecânica)
-3. Clica `▶ Rodar varredura`
-4. Motor faz sine em ~8 frequências (0.5, 1, 2, 5, 10, 20, 50, 100 Hz tipicamente)
-5. Recenter automático entre cada — leva ~75s no modo natural, ~75s no full
+1. **Performance Test** tab, scroll to `📊 Frequency Sweep test`
+2. Pick mode:
+   - **Full sweep** — with effects active (measures the entire chain as it will run in the game)
+   - **Natural response only** — zeroes the effects (measures only motor + mechanics)
+3. Click `▶ Run sweep`
+4. Motor runs sine at ~8 frequencies (typically 0.5, 1, 2, 5, 10, 20, 50, 100 Hz)
+5. Auto-recenter between each — takes ~75s in natural mode, ~75s in full
 
-### Interpretar o resultado
+### Interpret the result
 
-Vai pra aba **FFB Filters**, gráfico **Frequency Response**:
+Go to the **FFB Filters** tab, **Frequency Response** chart:
 
-- 🟢 **Curva verde sólida** = resposta TEÓRICA dos filtros configurados
-- 🟢 **Pontos verdes** = MEDIDOS pelo sweep
+- 🟢 **Solid green curve** = THEORETICAL response of the configured filters
+- 🟢 **Green dots** = MEASURED by the sweep
 
-**Se batem** → modelo validado, filtros funcionando como esperado.
+**If they match** → model validated, filters working as expected.
 
-**Se divergem:**
-- **Pontos abaixo da curva** = atenuação real maior que teórica → tem perda extra que o modelo não pega (current loop, saturação)
-- **Pontos acima da curva** = ressonância não modelada (típico em wheels com cog forte ou mancal solto)
-- **Pontos divergindo em alta freq (> 50 Hz)** = current bandwidth limitando — considere aumentar `current_control_bandwidth`
+**If they diverge:**
+- **Dots below the curve** = real attenuation greater than theory → there's extra loss the model doesn't catch (current loop, saturation)
+- **Dots above the curve** = unmodeled resonance (typical in wheels with strong cogging or loose bearing)
+- **Dots diverging at high freq (> 50 Hz)** = current bandwidth limiting — consider raising `current_control_bandwidth`
 
-### Bonus: torque medido
+### Bonus: measured torque
 
-O Sweep usa o **torque medido** real (Iq × Kt do motor), não o commanded. Isso significa que a curva Bode reflete o que o motor **entrega**, não o que o controlador pediu — bem mais fiel à realidade.
+The Sweep uses the **real measured torque** (Iq × Kt of the motor), not the commanded value. That means the Bode curve reflects what the motor **delivers**, not what the controller asked for — much closer to reality.
 
 ---
 
-## Passo 5 — Live FFT durante gameplay
+## Step 5 — Live FFT during gameplay
 
-Filtros validados em testes sintéticos? Hora de ver como eles se comportam com o que o **jogo real** está mandando.
+Filters validated in synthetic tests? Time to see how they behave with what the **real game** is sending.
 
-### Como rodar
+### How to run
 
-1. Aba **Overlay**, marca o checkbox **`Mostrar gráfico de espectro (FFT τ_cmd vs Iq @ 1 kHz)`**
-2. Abre o PiP overlay
-3. Joga normalmente OU mova o volante manualmente
-4. Olha o painel inferior do PiP
+1. **Overlay** tab, check the **`Show spectrum chart (FFT τ_cmd vs Iq @ 1 kHz)`** checkbox
+2. Open the PiP overlay
+3. Play normally OR move the wheel manually
+4. Watch the bottom panel of the PiP
 
-### Modos
+### Modes
 
-- **Modo "τ_cmd vs Iq"** (sobreposto): vê o que o jogo está pedindo (azul) vs o que o motor está entregando (laranja). Se laranja cai cedo demais comparado a azul → seus filtros estão cortando energia que o jogo queria entregar.
-- **Modo "Iq / τ_cmd"** (Bode da chain): mostra a função de transferência da chain extraída do gameplay. Compare visualmente com a curva teórica da aba FFB Filters.
+- **"τ_cmd vs Iq" mode** (overlaid): see what the game is asking (blue) vs what the motor is delivering (orange). If orange drops off too early compared to blue → your filters are cutting energy the game wanted to deliver.
+- **"Iq / τ_cmd" mode** (chain Bode): shows the chain transfer function extracted from gameplay. Compare visually with the theoretical curve in the FFB Filters tab.
 
-### Anotações no chart
+### Chart annotations
 
-3 linhas verticais te ajudam a localizar onde os pólos estão:
-- ⚪ **f_c_mec** (pólo mecânico, do Coastdown + PT) — abaixo daqui você sente massa
-- ⚪ **f_LR** (pólo elétrico, R/L do motor) — acima daqui controle vira ruído
-- 🟡 **CF** (cutoff atual do filtro Constant Force) — aqui é onde você está cortando
+3 vertical lines help locate where the poles are:
+- ⚪ **f_c_mec** (mechanical pole, from Coastdown + PT) — below here you feel mass
+- ⚪ **f_LR** (electrical pole, motor R/L) — above here control turns into noise
+- 🟡 **CF** (current Constant Force filter cutoff) — this is where you're cutting
 
-### O que ajustar com base no FFT
+### What to adjust based on the FFT
 
-| Observação | Diagnóstico | Ação |
+| Observation | Diagnosis | Action |
 |---|---|---|
-| Energia do jogo até 100 Hz, CF cortando em 30 Hz | Filtro CF muito agressivo | Sobe CF pra 60–80 Hz |
-| Energia do jogo só até 20 Hz, CF em 100 Hz | Filtro CF não precisa ser tão alto | Reduz CF — menos ruído de encoder no motor |
-| Pico isolado em ~150 Hz no Iq sem nada em τ_cmd | Ruído de cogging ou encoder | Sobre o CF mais baixo OU rode anti-cogging |
-| Iq travado em saturação várias vezes | Você está clipando | Reduz `fxratio` ou aumenta `current_lim` |
+| Game energy up to 100 Hz, CF cutting at 30 Hz | CF filter too aggressive | Raise CF to 60–80 Hz |
+| Game energy only up to 20 Hz, CF at 100 Hz | CF filter doesn't need to be so high | Reduce CF — less encoder noise to the motor |
+| Isolated peak around ~150 Hz on Iq with nothing on τ_cmd | Cogging or encoder noise | Lower CF OR run anti-cogging |
+| Iq locked in saturation multiple times | You're clipping | Reduce `fxratio` or raise `current_lim` |
 
 ---
 
-## Passo 6 — Tunando os efeitos do jogo
+## Step 6 — Tuning the game's effects
 
-Filtros configurados, validados em sweep e gameplay. Agora vai pros efeitos finais — o que o jogo manda.
+Filters configured, validated in sweep and gameplay. Now on to the final effects — what the game sends.
 
-### Hierarquia de gain
+### Gain hierarchy
 
 ```
-Jogo manda força (-100% a +100%) — em sim de corrida = só Constant Force
+Game sends force (-100% to +100%) — in racing sim = only Constant Force
        ↓
-   × fxratio    (slider master FFB)
+   × fxratio    (FFB master slider)
        ↓
-   × maxtorque  (limite absoluto em Nm)
+   × maxtorque  (absolute limit in Nm)
        ↓
-   = torque entregue ao motor
+   = torque delivered to the motor
 ```
 
-| Param | Range típico | Onde mexer |
+| Param | Typical range | Where to tune |
 |---|---|---|
-| `maxtorque` | 3–10 Nm | Aba FFB Wheel — limite físico do que motor pode dar (depende de `current_lim`) |
-| `fxratio` | 50–100% | Aba FFB Wheel — atenuador global, use pra evitar clipping |
-| `range_deg` | 540–1080° | Aba FFB Wheel — range total da rotação |
+| `maxtorque` | 3–10 Nm | FFB Wheel tab — physical limit of what the motor can give (depends on `current_lim`) |
+| `fxratio` | 50–100% | FFB Wheel tab — global attenuator, use to avoid clipping |
+| `range_deg` | 540–1080° | FFB Wheel tab — total rotation range |
 
-### Efeitos no jogo (sim de corrida)
+### In-game effects (racing sim)
 
-**Em 90% dos casos, só importa um slider:**
+**In 90% of cases, only one slider matters:**
 
-- **Force Feedback Strength / Gain / Intensidade** — o gain do Constant Force. **Este é o único que faz diferença real.**
+- **Force Feedback Strength / Gain / Intensity** — the Constant Force gain. **This is the only one that makes a real difference.**
 
-### Diagnóstico — descobrir o que o jogo realmente envia
+### Diagnostic — find out what the game actually sends
 
-Antes de gastar tempo ajustando sliders no jogo, **veja primeiro o que ele está mandando** pelo USB:
+Before spending time tuning sliders in the game, **first see what it's sending** over USB:
 
-1. Abra a aba **FFB Live** durante o gameplay (ou com o jogo em pista, FFB ativo)
-2. Olhe o painel **`Efeitos ativos`** — mostra até 3 slots concorrentes
-3. Para cada slot ativo (`state ≠ idle`), você vê:
-   - **`type`** — qual efeito foi registrado pelo jogo (Constant Force, Spring, Damper, Friction, Periodic, Inertia, etc.)
-   - **`magnitude`** — intensidade atual do effect (-32768 a 32767)
-   - **`gain`** — gain individual do effect (0–10000)
-4. No mesmo painel, **`Effect 0 magnitude — análise de dinâmica`** mostra:
-   - **`samples na janela`** — quantas atualizações de magnitude o jogo enviou desde o último Reset. Dividido pelo tempo de janela = **taxa de refresh do effect** (Hz que o jogo manda atualização)
-   - **`range`** — variação dinâmica (range pequeno + média alta = sinal estático tipo mola; range grande = dinâmica chegando)
-   - **`delta máximo`** — maior salto entre samples consecutivos (transientes tipo kerb/slip)
+1. Open the **FFB Live** tab during gameplay (or with the game on track, FFB active)
+2. Look at the **`Active effects`** panel — shows up to 3 concurrent slots
+3. For each active slot (`state ≠ idle`), you see:
+   - **`type`** — which effect the game registered (Constant Force, Spring, Damper, Friction, Periodic, Inertia, etc.)
+   - **`magnitude`** — current effect intensity (-32768 to 32767)
+   - **`gain`** — individual effect gain (0–10000)
+4. In the same panel, **`Effect 0 magnitude — dynamics analysis`** shows:
+   - **`samples in window`** — how many magnitude updates the game sent since the last Reset. Divided by window time = **effect refresh rate** (Hz at which the game sends updates)
+   - **`range`** — dynamic variation (small range + high average = static signal like a spring; large range = dynamics arriving)
+   - **`max delta`** — biggest jump between consecutive samples (transients like kerb/slip)
 
-**Padrões típicos:**
+**Typical patterns:**
 
-| Observação no `Efeitos ativos` | Significado |
+| Observation in `Active effects` | Meaning |
 |---|---|
-| 1 slot ativo, `type = Constant Force`, magnitude variando rápido | Sim de corrida típico — CF é tudo |
-| 2+ slots ativos com types diferentes (CF + Spring, CF + Damper) | Jogo antigo ou sim que **realmente** envia effects separados — vale ajustar todos os filtros |
-| Slot com `type = Spring/Damper/Friction` mas mag estático | Jogo registrou mas não atualiza — efeito de auto-centro fixo |
-| Taxa de refresh < 60 Hz | Jogo lento, sinal vai chegar "stair-stepped" — CF filter ajuda a suavizar |
-| Taxa de refresh > 250 Hz | Jogo de alta taxa (iRacing 360 Hz, etc.) — pode aproveitar CF mais agressivo |
+| 1 active slot, `type = Constant Force`, magnitude varying fast | Typical racing sim — CF is everything |
+| 2+ active slots with different types (CF + Spring, CF + Damper) | Old game or sim that **actually** sends separate effects — worth tuning all filters |
+| Slot with `type = Spring/Damper/Friction` but static magnitude | Game registered but doesn't update — fixed auto-center effect |
+| Refresh rate < 60 Hz | Slow game, signal will arrive "stair-stepped" — CF filter helps smooth it |
+| Refresh rate > 250 Hz | High-rate game (iRacing 360 Hz, etc.) — can take advantage of more aggressive CF |
 
-**Teste empírico rápido:** mexa o slider **Damper** do jogo durante o gameplay. Se nenhum slot novo aparecer com `type = Damper`, o slider **não envia effect separado** — ele apenas modula a CF. Único caminho de ter Damper real é habilitando manualmente na aba **FFB Wheel**.
+**Quick empirical test:** move the **Damper** slider in the game during gameplay. If no new slot appears with `type = Damper`, the slider **doesn't send a separate effect** — it just modulates the CF. The only path to real Damper is enabling manually in the **FFB Wheel** tab.
 
-### Estratégia de tuning (sim de corrida)
+### Tuning strategy (racing sim)
 
-2. **Sobe FFB Strength (gain de CF) até sentir os efeitos** — kerbs devem dar pulso forte
-3. **Se Live FFT mostrar clipping (Iq saturando > 5%):** reduz `fxratio` na aba FFB Wheel ou reduz FFB Strength no jogo
-4. **Se quiser mais peso/damping que o jogo não dá:** habilita manualmente Damper ou Friction na aba **FFB Wheel** com gain pequeno (10–30%). Esses efeitos rodam em paralelo no firmware OFFB, somam com o CF do jogo. Não recomendado, pelo bem da senseção real de pista.
+2. **Raise FFB Strength (CF gain) until you feel the effects** — kerbs should give a strong pulse
+3. **If Live FFT shows clipping (Iq saturating > 5%):** reduce `fxratio` in the FFB Wheel tab or reduce FFB Strength in the game
+4. **If you want more weight/damping than the game gives:** enable Damper or Friction manually in the **FFB Wheel** tab with small gain (10–30%). These effects run in parallel in the OFFB firmware, summing with the game's CF. Not recommended, for the sake of real track feel.
 
-### Quando os efeitos extras valem a pena
+### When the extra effects are worth it
 
-| Caso | Adicionar manualmente |
+| Case | Add manually |
 |---|---|
-| Wheel coast forever, oscila parando | **Damper** (10–20%) — adiciona freio velocidade-dependente que o sim não tá dando |
-| Wheel leve demais, sem "peso" parado | **Friction** (5–15%) — adiciona resistência constante |
+| Wheel coasts forever, oscillates when stopping | **Damper** (10–20%) — adds velocity-dependent brake the sim isn't giving |
+| Wheel too light, no "weight" at rest | **Friction** (5–15%) — adds constant resistance |
 
-### Sinais de clipping
+### Signs of clipping
 
-Se durante gameplay você sentir:
-- **Pulsos fortes saturando no mesmo nível** — `maxtorque` ou `current_lim` atingido
-- **Granulosidade em alta velocidade** — current bandwidth insuficiente, ou CF cortando demais
-- **Vibração em uma região específica do volante** — cogging residual, considere anti-cogging
-- **Lag entre input e resposta** — `fxratio` muito baixo OU filtros muito agressivos
+If during gameplay you feel:
+- **Strong pulses saturating at the same level** — `maxtorque` or `current_lim` hit
+- **Graininess at high velocity** — insufficient current bandwidth, or CF cutting too much
+- **Vibration in a specific region of the wheel** — residual cogging, consider anti-cogging
+- **Lag between input and response** — `fxratio` too low OR filters too aggressive
 
-### Validação contínua
+### Continuous validation
 
-Mantém o **Live FFT no PiP overlay** aberto durante uma sessão de gameplay. Se Iq saturar > 5% do tempo, você tá clipando — recua `fxratio`. Se Iq seguir τ_cmd com fidelidade alta (curva Bode plana até CF), você tá no ponto certo.
+Keep the **Live FFT in the PiP overlay** open during a gameplay session. If Iq saturates > 5% of the time, you're clipping — back off `fxratio`. If Iq follows τ_cmd with high fidelity (flat Bode curve up to CF), you're at the right point.
 
 ---
 
 ## Troubleshooting
 
-### "Wheel oscila quando paro o carro"
-- **Solução:** habilita Damper manualmente na aba **FFB Wheel** com 15–30% — vai somar com a CF do jogo.
+### "Wheel oscillates when I stop the car"
+- **Solution:** enable Damper manually in the **FFB Wheel** tab at 15–30% — it will sum with the game's CF.
 
-### "Wheel parece pesado demais em curva"
-- CF cortando demais OU jogo entregando muito sinal
-- Reduz FFB Strength no jogo OU sobe CF cutoff
-- Se você habilitou Friction manual, reduz ou desabilita
+### "Wheel feels too heavy in corners"
+- CF cutting too much OR game delivering too much signal
+- Reduce FFB Strength in the game OR raise CF cutoff
+- If you enabled manual Friction, reduce or disable it
 
-### "Não sinto kerb"
-- CF filter cortando demais OU `fxratio` baixo OU FFB Strength baixo no jogo
-- Sobe CF cutoff pra 80 Hz, sobe `fxratio` pra 100%, sobe FFB Strength
+### "Can't feel the kerbs"
+- CF filter cutting too much OR `fxratio` low OR FFB Strength low in the game
+- Raise CF cutoff to 80 Hz, raise `fxratio` to 100%, raise FFB Strength
 
-### "Wheel `morde` ao soltar"
-- Sim de corrida modernos: o "morder" é parte do CF de simulação, não Spring effect.
-- **Solução:** reduz FFB Strength geral do jogo, ou habilita Damper manual na aba FFB Wheel pra suavizar o retorno
+### "Wheel `bites back` on release"
+- Modern racing sims: the "bite" is part of the simulated CF, not a Spring effect.
+- **Solution:** reduce overall FFB Strength in the game, or enable manual Damper in the FFB Wheel tab to smooth out the return
 
-### "Vibração rápida em retas"
-- Workaround: baixa CF cutoff (mas perde detalhe)
+### "Fast vibration on straights"
+- Workaround: lower CF cutoff (but loses detail)
 
-### "Volante `pula` em vibrações fortes"
-- Saturação de current
-- Reduz `fxratio`, ou aumenta `current_lim` se o motor aguenta
+### "Wheel `jumps` on strong vibrations"
+- Current saturation
+- Reduce `fxratio`, or raise `current_lim` if the motor can handle it
 
 --
 
-Bom tuning. 🏎️
+Happy tuning. 🏎️
