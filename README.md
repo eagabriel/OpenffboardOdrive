@@ -153,9 +153,14 @@ itself — every field has a hover tooltip.
 go to the **DFU Flash** tab, click **📡 Fetch latest from GitHub**, follow
 the four buttons. Zero downloads on your side.
 
-**First flash from a blank board** needs the STM32 DFU driver (`dfu-util`
-CLI on Linux/macOS, Zadig one-time setup on Windows). Full walkthrough in
-[docs/GETTING_STARTED.md](docs/GETTING_STARTED.md).
+**First flash from a blank board:** hold **BOOT0** and press **RESET** (or
+power-cycle with BOOT0 held) to enter DFU mode via the built-in bootloader
+— no extra tooling needed to get the board discovered. From there the
+in-browser flasher (WebUSB) handles the rest on Chrome/Edge. If the browser
+does not see the DFU device — happens on some Windows setups because
+`0483:df11` needs the WinUSB driver — install it once with
+[Zadig](https://zadig.akeo.ie/), or fall back to `dfu-util`. Full
+walkthrough in [docs/GETTING_STARTED.md](docs/GETTING_STARTED.md).
 
 ## Build from source
 
