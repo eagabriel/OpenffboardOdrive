@@ -56,8 +56,12 @@ Applies CF up to saturation, lets the motor accelerate freely until the endstop,
 
 ### How to run
 
+<p align="center">
+  <img src="screenshots/tuning/tuning-perftest.png" alt="Performance Test tab — Start test button and safety warnings" width="720">
+</p>
+
 1. **Performance Test** tab
-2. Click `▶ Start` (HID auto-connects the first time via browser popup)
+2. Click `▶ Start test` (HID auto-connects the first time via browser popup)
 3. Confirm the safety prompt
 4. Motor centers → pushes to endstop → releases → ramps → measures
 5. Result shows up in ~10 seconds
@@ -132,7 +136,11 @@ Each filter has `Freq` (cutoff in Hz) and `Q` (quality factor — how "resonant"
 
 ### Where to tune
 
-The **FFB Filters** tab shows 4 cards with Freq and Q sliders. Each has a frequency response chart updating live.
+The **FFB Filters** tab shows the 3-band EQ at the top, then 4 cards with Freq and Q sliders for the per-effect biquads, and a frequency response chart at the bottom that updates live as you move any slider.
+
+<p align="center">
+  <img src="screenshots/tuning/tuning-ffb-filters.png" alt="FFB Filters tab — EQ bands on top, filter response chart below" width="820">
+</p>
 
 ### How to choose CF (the most important)
 
@@ -162,6 +170,33 @@ Scenarios where adjusting **makes sense**:
 3. **You play an old sim or flight sim** that uses separate Damper/Friction effects → all filters matter.
 
 Most of the feel comes from **CF + the game's CF effect gain**. The others are accessories.
+
+### The 3-band EQ (WEIGHT / CHASSIS / ROAD)
+
+Below the 4 per-effect filter cards, the FFB Filters tab shows a 3-slider **EQ** with a live cumulative response chart. It sits **after** the per-effect filters and acts on the **summed** game force, before the output clip.
+
+| Band | Type | Centre | What it emphasises |
+|---|---|---|---|
+| **WEIGHT** | low-shelf | 5 Hz | The DC-to-low-frequency load you feel through sustained cornering |
+| **CHASSIS** | peak | 12 Hz | Body roll, weight transfer, suspension oscillation |
+| **ROAD** | high-shelf | 25 Hz | Kerbs, texture, tyre chatter |
+
+Range is ±12 dB per band. Axis effects (endstop, idle spring, axis damper/friction/inertia added in the FFB Wheel tab) go **around** the EQ and are not affected by it.
+
+**Key property — sustained cornering weight is invariant.** The cascade is normalised on its DC gain, so no matter how the bands are set, a constant torque input comes out at the same level. Raising ROAD makes kerbs more prominent; lowering CHASSIS calms body roll — but the base weight you calibrated with `maxtorque` never changes. You never need to recalibrate maxtorque after moving these sliders.
+
+**Consequence for WEIGHT.** Because DC is locked, WEIGHT is *subtractive by construction* — raising WEIGHT does not push cornering weight up (it can't), it lowers the midrange and highs around it, which reads as "heavier" by contrast. If you want more absolute weight, `maxtorque` or the in-game FFB strength is the right knob, not this one.
+
+**How to use — start at 0 dB across, add small amounts:**
+
+- Kerbs feel muted → **ROAD +3 to +6 dB**
+- Kerbs feel too aggressive → **ROAD −3 to −6 dB**
+- Body roll and weight transfer indistinct → **CHASSIS +3 to +6 dB**
+- Everything on top of the cornering weight feels loud → **WEIGHT +3 dB** (which cuts midrange and highs while DC stays put)
+
+The chart above the sliders shows the resulting curve in dB. Anything with all three bands at 0 dB gives you *exactly the same feel as before the EQ existed* — the cascade goes into pure bypass mode with zero CPU cost.
+
+Values are written live and persist through `sys.save!` like any other axis parameter.
 
 ### Q quick reference
 
@@ -201,6 +236,7 @@ Go to the **FFB Filters** tab, **Frequency Response** chart:
 - **Dots below the curve** = real attenuation greater than theory → there's extra loss the model doesn't catch (current loop, saturation)
 - **Dots above the curve** = unmodeled resonance (typical in wheels with strong cogging or loose bearing)
 - **Dots diverging at high freq (> 50 Hz)** = current bandwidth limiting — consider raising `current_control_bandwidth`
+- **Dots noisy across the whole range, even below the CF cutoff** = velocity/acceleration noise reaching the effects — try raising `axis0.encoder.config.bandwidth` (the PLL bandwidth). Since v1.1.0 damper/friction/inertia read velocity from the PLL instead of raw-position differentiation, and this parameter is the real knob for how sharp or smooth those effects feel. Absolute encoders (AS5047, MT6835) can sit at 1000–2000 Hz comfortably.
 
 ### Bonus: measured torque
 
@@ -214,8 +250,12 @@ Filters validated in synthetic tests? Time to see how they behave with what the 
 
 ### How to run
 
-1. **Overlay** tab, check the **`Show spectrum chart (FFT τ_cmd vs Iq @ 1 kHz)`** checkbox
-2. Open the PiP overlay
+<p align="center">
+  <img src="screenshots/tuning/tuning-overlay.png" alt="Overlay tab — Show spectrum chart checkbox and numeric indicators" width="820">
+</p>
+
+1. **Overlay** tab, tick **`Show spectrum chart (FFT τ_cmd vs Iq @ 1 kHz)`**
+2. Click **`Open overlay`**
 3. Play normally OR move the wheel manually
 4. Watch the bottom panel of the PiP
 
@@ -264,6 +304,10 @@ Game sends force (-100% to +100%) — in racing sim = only Constant Force
 | `fxratio` | 50–100% | FFB Wheel tab — global attenuator, use to avoid clipping |
 | `range_deg` | 540–1080° | FFB Wheel tab — total rotation range |
 
+<p align="center">
+  <img src="screenshots/tuning/tuning-ffb-wheel.png" alt="FFB Wheel tab — force scaling and always-on axis effects" width="820">
+</p>
+
 ### In-game effects (racing sim)
 
 **In 90% of cases, only one slider matters:**
@@ -273,6 +317,10 @@ Game sends force (-100% to +100%) — in racing sim = only Constant Force
 ### Diagnostic — find out what the game actually sends
 
 Before spending time tuning sliders in the game, **first see what it's sending** over USB:
+
+<p align="center">
+  <img src="screenshots/tuning/tuning-ffb-live.png" alt="FFB Live tab — Active effects panel with up to 3 slots and dynamics analysis" width="820">
+</p>
 
 1. Open the **FFB Live** tab during gameplay (or with the game on track, FFB active)
 2. Look at the **`Active effects`** panel — shows up to 3 concurrent slots
@@ -321,6 +369,34 @@ If during gameplay you feel:
 ### Continuous validation
 
 Keep the **Live FFT in the PiP overlay** open during a gameplay session. If Iq saturates > 5% of the time, you're clipping — back off `fxratio`. If Iq follows τ_cmd with high fidelity (flat Bode curve up to CF), you're at the right point.
+
+---
+
+## Save one profile per car (or per driving style)
+
+Once you settle on a tuning that feels right for a car class, the **Profiles** tab lets you snapshot the whole setup under a name and switch back to it in one click.
+
+<p align="center">
+  <img src="screenshots/tuning/tuning-profiles.png" alt="Profiles tab — folder picker, saved list, Apply/Save/Rename/Delete/Export/Import" width="820">
+</p>
+
+A profile stores:
+
+- The three FFB tabs in full — FFB Wheel (range, maxtorque, fxratio, invert, idle spring, axis damper/friction/inertia, endstop, expo), FFB Effects (master + per-effect gains), FFB Filters (biquad Freq/Q per effect **and** the 3-band EQ)
+- Three tuning parameters that also shape the feeling — `encoder.config.bandwidth`, `motor.config.current_lim`, `motor.config.current_control_bandwidth`
+
+Motor and encoder *identity* — pole pairs, phase resistance, encoder mode, calibration offset — is deliberately left out, so loading a profile can never break your calibration.
+
+The tab asks for a folder on your computer the first time you use it. Profiles are ordinary JSON files inside it, so you can back them up, sync them through Drive or OneDrive, and share them with other drivers. The folder is remembered across sessions.
+
+**Suggested workflow:**
+
+1. Tune for one representative car until it feels right (GT3 dry, for example)
+2. Profiles tab → **Save current as…** → give it a clear name
+3. Repeat for other classes (rally wet, kart, prototype)
+4. Apply a profile before a race; if you approve after a lap, click **Save** in the header to write to the board's permanent memory. If you don't, reboot the board and it goes back to what was saved.
+
+Applying a profile writes to RAM only — reboot reverts. This makes trying someone else's profile risk-free.
 
 ---
 

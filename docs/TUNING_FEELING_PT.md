@@ -56,8 +56,12 @@ Aplica CF até saturação, deixa o motor acelerar livremente até o batente, ca
 
 ### Como rodar
 
+<p align="center">
+  <img src="screenshots/tuning/tuning-perftest.png" alt="Aba Performance Test — botão Start test e avisos de segurança" width="720">
+</p>
+
 1. Aba **Performance Test**
-2. Clica `▶ Iniciar` (HID conecta sozinho na primeira vez via popup do browser)
+2. Clica `▶ Start test` (HID conecta sozinho na primeira vez via popup do browser)
 3. Confirma o aviso de segurança
 4. Motor centraliza → empurra até o batente → libera → rampeia → mede
 5. Resultado aparece em ~10 segundos
@@ -132,7 +136,11 @@ Cada filtro tem `Freq` (cutoff em Hz) e `Q` (fator de qualidade — quão "resso
 
 ### Onde mexer
 
-Aba **FFB Filters** mostra os 4 cards com sliders de Freq e Q. Cada um tem o gráfico de resposta em frequência atualizando ao vivo.
+Na aba **FFB Filters** você vê o EQ de 3 bandas no topo, depois os 4 cards de filtro por-efeito com sliders de Freq e Q, e um gráfico de resposta em frequência embaixo que atualiza em tempo real ao mexer qualquer slider.
+
+<p align="center">
+  <img src="screenshots/tuning/tuning-ffb-filters.png" alt="Aba FFB Filters — EQ de bandas no topo, gráfico de resposta abaixo" width="820">
+</p>
 
 ### Como escolher CF (o mais importante)
 
@@ -162,6 +170,33 @@ Cenários em que ajustar **faz sentido**:
 3. **Joga sim antigo ou flight sim** que usa Damper/Friction effects separados → todos os filtros importam.
 
 A maior parte do feeling vem do **CF + gain do efeito CF no jogo**. Os outros são acessórios.
+
+### O EQ de 3 bandas (WEIGHT / CHASSIS / ROAD)
+
+Abaixo dos 4 cards de filtro por-efeito, a aba FFB Filters mostra um **EQ** de 3 sliders com gráfico de resposta cumulativa ao vivo. Ele fica **depois** dos filtros por-efeito e atua sobre a força **somada** do jogo, antes do clip de saída.
+
+| Banda | Tipo | Centro | O que realça |
+|---|---|---|---|
+| **WEIGHT** | low-shelf | 5 Hz | A carga de DC até muito baixa frequência que você sente na curva sustentada |
+| **CHASSIS** | peak | 12 Hz | Rolagem de carroceria, transferência de peso, oscilação de suspensão |
+| **ROAD** | high-shelf | 25 Hz | Zebras, textura de pista, chatter de pneu |
+
+O range é ±12 dB por banda. Axis effects (endstop, idle spring, axis damper/friction/inertia adicionados na aba FFB Wheel) entram **fora** do EQ e não são afetados por ele.
+
+**Propriedade chave — o peso na curva sustentada é invariante.** A cascata é normalizada pelo ganho em DC, então não importa como você ajuste as bandas, um torque constante na entrada sai no mesmo nível. Subir ROAD deixa as zebras mais evidentes; baixar CHASSIS acalma a rolagem — mas o peso base que você calibrou com `maxtorque` não muda. Não precisa recalibrar maxtorque depois de mexer nesses sliders.
+
+**Consequência pro WEIGHT.** Como o DC está travado, WEIGHT é *subtrativo por construção* — subir WEIGHT não puxa o peso de curva pra cima (não pode), ele baixa as médias e altas ao redor, o que se sente como "mais pesado" por contraste. Se você quer mais peso absoluto, o knob certo é `maxtorque` ou a FFB Strength do jogo, não esse.
+
+**Como usar — comece em 0 dB em todas, adicione pequenas quantidades:**
+
+- Zebras parecem apagadas → **ROAD +3 a +6 dB**
+- Zebras parecem agressivas demais → **ROAD −3 a −6 dB**
+- Rolagem e transferência de peso indistintas → **CHASSIS +3 a +6 dB**
+- Tudo em cima do peso de curva parece alto → **WEIGHT +3 dB** (corta o meio e agudos enquanto DC fica parado)
+
+O gráfico acima dos sliders mostra a curva resultante em dB. Com todas as três bandas em 0 dB você tem *exatamente o mesmo comportamento de antes do EQ existir* — a cascata entra em bypass puro com custo zero de CPU.
+
+Os valores são escritos ao vivo e persistem via `sys.save!` como qualquer outro parâmetro do axis.
 
 ### Quick reference Q
 
@@ -201,6 +236,7 @@ Vai pra aba **FFB Filters**, gráfico **Frequency Response**:
 - **Pontos abaixo da curva** = atenuação real maior que teórica → tem perda extra que o modelo não pega (current loop, saturação)
 - **Pontos acima da curva** = ressonância não modelada (típico em wheels com cog forte ou mancal solto)
 - **Pontos divergindo em alta freq (> 50 Hz)** = current bandwidth limitando — considere aumentar `current_control_bandwidth`
+- **Pontos com ruído em toda a faixa, mesmo abaixo do cutoff do CF** = ruído de velocidade/aceleração chegando nos efeitos — tenta subir `axis0.encoder.config.bandwidth` (banda da PLL). Desde a v1.1.0 os efeitos damper/friction/inertia leem velocidade da PLL em vez da derivada bruta da posição, e esse parâmetro é o knob real de quão nítidos ou suaves esses efeitos ficam. Encoders absolutos (AS5047, MT6835) aguentam 1000–2000 Hz sem problema.
 
 ### Bonus: torque medido
 
@@ -214,8 +250,12 @@ Filtros validados em testes sintéticos? Hora de ver como eles se comportam com 
 
 ### Como rodar
 
-1. Aba **Overlay**, marca o checkbox **`Mostrar gráfico de espectro (FFT τ_cmd vs Iq @ 1 kHz)`**
-2. Abre o PiP overlay
+<p align="center">
+  <img src="screenshots/tuning/tuning-overlay.png" alt="Aba Overlay — checkbox Show spectrum chart e indicadores numéricos" width="820">
+</p>
+
+1. Aba **Overlay**, marca o checkbox **`Show spectrum chart (FFT τ_cmd vs Iq @ 1 kHz)`**
+2. Clica **`Open overlay`**
 3. Joga normalmente OU mova o volante manualmente
 4. Olha o painel inferior do PiP
 
@@ -264,6 +304,10 @@ Jogo manda força (-100% a +100%) — em sim de corrida = só Constant Force
 | `fxratio` | 50–100% | Aba FFB Wheel — atenuador global, use pra evitar clipping |
 | `range_deg` | 540–1080° | Aba FFB Wheel — range total da rotação |
 
+<p align="center">
+  <img src="screenshots/tuning/tuning-ffb-wheel.png" alt="Aba FFB Wheel — escala de força e axis effects sempre ativos" width="820">
+</p>
+
 ### Efeitos no jogo (sim de corrida)
 
 **Em 90% dos casos, só importa um slider:**
@@ -273,6 +317,10 @@ Jogo manda força (-100% a +100%) — em sim de corrida = só Constant Force
 ### Diagnóstico — descobrir o que o jogo realmente envia
 
 Antes de gastar tempo ajustando sliders no jogo, **veja primeiro o que ele está mandando** pelo USB:
+
+<p align="center">
+  <img src="screenshots/tuning/tuning-ffb-live.png" alt="Aba FFB Live — painel Active effects com até 3 slots e análise de dinâmica" width="820">
+</p>
 
 1. Abra a aba **FFB Live** durante o gameplay (ou com o jogo em pista, FFB ativo)
 2. Olhe o painel **`Efeitos ativos`** — mostra até 3 slots concorrentes
@@ -321,6 +369,34 @@ Se durante gameplay você sentir:
 ### Validação contínua
 
 Mantém o **Live FFT no PiP overlay** aberto durante uma sessão de gameplay. Se Iq saturar > 5% do tempo, você tá clipando — recua `fxratio`. Se Iq seguir τ_cmd com fidelidade alta (curva Bode plana até CF), você tá no ponto certo.
+
+---
+
+## Salvar um perfil por carro (ou por estilo de pilotagem)
+
+Depois que você achou um tuning que sente bom pra uma categoria, a aba **Perfis** deixa você guardar o setup inteiro com um nome e voltar pra ele em um clique.
+
+<p align="center">
+  <img src="screenshots/tuning/tuning-profiles.png" alt="Aba Perfis — seletor de pasta, lista salva, Aplicar/Salvar/Renomear/Excluir/Exportar/Importar" width="820">
+</p>
+
+Um perfil guarda:
+
+- As três abas de FFB por inteiro — FFB Wheel (range, maxtorque, fxratio, invert, idle spring, axis damper/friction/inertia, endstop, expo), FFB Effects (master + gains por-efeito), FFB Filters (biquad Freq/Q por efeito **e** o EQ de 3 bandas)
+- Três parâmetros de tuning que também moldam a sensação — `encoder.config.bandwidth`, `motor.config.current_lim`, `motor.config.current_control_bandwidth`
+
+A *identidade* do motor e do encoder — pole pairs, phase resistance, modo do encoder, offset de calibração — fica de fora de propósito, então carregar um perfil nunca quebra sua calibração.
+
+A aba pede uma pasta no seu computador na primeira vez que você usa. Os perfis são arquivos JSON comuns dentro dela, então dá para fazer backup, sincronizar via Drive ou OneDrive, e compartilhar com outros pilotos. A pasta é lembrada entre sessões.
+
+**Fluxo sugerido:**
+
+1. Tuna pra um carro representativo até ficar bom (GT3 seco, por exemplo)
+2. Aba Perfis → **Salvar atual como…** → dá um nome claro
+3. Repete pra outras categorias (rally chuva, kart, protótipo)
+4. Aplica um perfil antes de uma corrida; se aprovar depois de uma volta, clica **Salvar** no cabeçalho pra gravar na memória permanente da placa. Se não gostar, reinicia a placa e volta pro que estava gravado.
+
+Aplicar um perfil escreve só na RAM — reboot reverte. Isso torna testar o perfil de outra pessoa livre de risco.
 
 ---
 
