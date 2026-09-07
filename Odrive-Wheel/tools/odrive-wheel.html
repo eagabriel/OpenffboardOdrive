@@ -1748,7 +1748,7 @@
   <div class="header-actions">
     <!-- Sponsor / BuyMeACoffee links (à esquerda do Connect) -->
     <span class="tool-version" title="HTML tool version"
-          style="font-size:11px;color:var(--muted);font-family:ui-monospace,Consolas,monospace;letter-spacing:0.5px;margin-right:2px;white-space:nowrap">V0.26</span>
+          style="font-size:11px;color:var(--muted);font-family:ui-monospace,Consolas,monospace;letter-spacing:0.5px;margin-right:2px;white-space:nowrap">V0.27</span>
     <a href="https://www.buymeacoffee.com/eduardogabq" target="_blank" rel="noopener"
        title="Buy Me a Coffee" data-i18n-title="btn.bmc_tip"
        style="display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:6px;background:#FFDD00;text-decoration:none;font-size:18px;line-height:1"
@@ -7052,21 +7052,33 @@ function _setupApplyFields(fields) {
 // Retorna {ok: bool, finalState: int, motorErr: int, encErr: int}.
 async function _setupRunState(stateNum, timeoutMs = 30000) {
   if (!writer) return { ok: false, reason: 'not_connected' };
-  await writeProp('axis0.requested_state', String(stateNum));
-  // Aguarda transição
-  await new Promise(r => setTimeout(r, 500));
-  const tStart = Date.now();
-  while (Date.now() - tStart < timeoutMs) {
-    const cs = await readProp('axis0.current_state').catch(() => null);
-    const v = parseInt((cs || '').trim(), 10);
-    if (v === 1) break; // de volta a IDLE
+  // Segura os polls periódicos (encoder-check do Step 8, painel MT6835 do
+  // diag) enquanto rodamos a sequência write→poll→3-reads: caso contrário
+  // eles injetam requests no mesmo canal serial e as respostas chegam
+  // trocadas na fila pendingReplies — o wizard lê "current_state" mas
+  // recebe o valor de "pos_estimate", declara falha por interpretar lixo
+  // como erro, e o comportamento fica intermitente (roda de novo e passa).
+  // Mesmo padrão do _profApplyValues e do doImport.
+  if (typeof _bulkReadBusy !== 'undefined') _bulkReadBusy++;
+  try {
+    await writeProp('axis0.requested_state', String(stateNum));
+    // Aguarda transição
     await new Promise(r => setTimeout(r, 500));
+    const tStart = Date.now();
+    while (Date.now() - tStart < timeoutMs) {
+      const cs = await readProp('axis0.current_state').catch(() => null);
+      const v = parseInt((cs || '').trim(), 10);
+      if (v === 1) break; // de volta a IDLE
+      await new Promise(r => setTimeout(r, 500));
+    }
+    const motorErr = parseInt((await readProp('axis0.motor.error') || '0'), 10);
+    const encErr   = parseInt((await readProp('axis0.encoder.error') || '0'), 10);
+    const axisErr  = parseInt((await readProp('axis0.error') || '0'), 10);
+    return { ok: motorErr === 0 && encErr === 0 && axisErr === 0,
+             motorErr, encErr, axisErr };
+  } finally {
+    if (typeof _bulkReadBusy !== 'undefined') _bulkReadBusy = Math.max(0, _bulkReadBusy - 1);
   }
-  const motorErr = parseInt((await readProp('axis0.motor.error') || '0'), 10);
-  const encErr   = parseInt((await readProp('axis0.encoder.error') || '0'), 10);
-  const axisErr  = parseInt((await readProp('axis0.error') || '0'), 10);
-  return { ok: motorErr === 0 && encErr === 0 && axisErr === 0,
-           motorErr, encErr, axisErr };
 }
 
 function buildSetupHTML() {
