@@ -47,6 +47,11 @@ full **HID Force Feedback** support to use the motor as a sim racing wheel.
     <img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png"
          alt="Buy me a coffee" height="80">
   </a>
+  &nbsp;&nbsp;
+  <a href="#pix-brazil">
+    <img src="https://img.shields.io/badge/PIX-Brazil-32BCAD?style=for-the-badge&logoColor=white"
+         alt="Donate via PIX (Brazil)" height="80">
+  </a>
 </p>
 
 <p align="center">
@@ -368,12 +373,35 @@ features, fixing bugs, and answering questions:
     <img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png"
          alt="Buy me a coffee" height="80">
   </a>
+  &nbsp;&nbsp;
+  <a href="#pix-brazil">
+    <img src="https://img.shields.io/badge/PIX-Brazil-32BCAD?style=for-the-badge&logoColor=white"
+         alt="Donate via PIX (Brazil)" height="80">
+  </a>
 </p>
 
 **GitHub Sponsors** is the easiest way for recurring support and gives you
 visibility on the repo. **Buy Me a Coffee** is great for a one-time thanks.
-Both go directly to me, and every contribution — no matter the size —
-makes a real difference.
+**PIX** ([details below](#pix-brazil)) is instant and free for donors in Brazil.
+Every contribution — no matter the size — makes a real difference.
+
+<a id="pix-brazil"></a>
+
+### 💚 PIX (Brazil)
+
+If you're in Brazil, PIX is the fastest way to donate — instant, no fees.
+Scan the QR below with your bank app, or copy the code and paste it into
+the "PIX Copia e Cola" field:
+
+<p align="center">
+  <img src="docs/pix-qr.png" alt="PIX QR code — recipient Eduardo Gabriel" width="260">
+</p>
+
+```
+00020126580014br.gov.bcb.pix0136a6228ec1-c293-4a94-8523-6b8b26c47e085204000053039865802BR5915EDUARDO.GABRIEL6009Sao Paulo610901227-20062210517daqr643133736513963048268
+```
+
+<p align="center"><sub>Recipient: <b>Eduardo Gabriel</b> · São Paulo</sub></p>
 
 🙏 **Other ways to help, even for free:**
 - ⭐ Star the repo
