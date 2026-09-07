@@ -1749,6 +1749,13 @@
     <!-- Sponsor / BuyMeACoffee links (à esquerda do Connect) -->
     <span class="tool-version" title="HTML tool version"
           style="font-size:11px;color:var(--muted);font-family:ui-monospace,Consolas,monospace;letter-spacing:0.5px;margin-right:2px;white-space:nowrap">V0.27</span>
+    <!-- PIX (Brazil): abre modal com QR code pre-gerado inline (offline).
+         Cor #32BCAD do branding oficial do PIX. -->
+    <button id="btn-pix-open" type="button"
+       title="PIX (Brasil) — clique para exibir o QR code"
+       data-i18n-title="btn.pix_tip"
+       style="display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:6px;background:#32BCAD;color:#fff;border:0;padding:0;cursor:pointer;font-family:ui-monospace,Consolas,monospace;font-size:11px;font-weight:800;letter-spacing:-0.5px;line-height:1"
+       aria-label="PIX QR code">pix</button>
     <a href="https://www.buymeacoffee.com/eduardogabq" target="_blank" rel="noopener"
        title="Buy Me a Coffee" data-i18n-title="btn.bmc_tip"
        style="display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:6px;background:#FFDD00;text-decoration:none;font-size:18px;line-height:1"
@@ -1787,6 +1794,51 @@
     </span>
   </div>
 </header>
+
+<!-- ============== Modal PIX ===========================================
+     QR code pre-gerado offline (SVG inline via segno) — sem CDN, sem
+     fetch. String PIX exposta como copia-e-cola pra apps que nao leem
+     camera. Backdrop clique-fora + tecla Esc fecham. -->
+<!-- Nota: display:flex inline vence o atributo [hidden] (que so aplica
+     display:none quando NAO ha display explicito). Por isso o toggle e
+     feito via .style.display no handler, nao via .hidden. -->
+<div id="pix-modal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="pix-modal-title"
+     style="display:none;position:fixed;inset:0;z-index:10000;align-items:center;justify-content:center;background:rgba(0,0,0,0.7);padding:20px">
+  <div style="background:var(--card,#141414);border:1px solid var(--border,#2a2a2a);border-radius:10px;padding:20px 22px;max-width:360px;width:100%;font-family:inherit;box-shadow:0 12px 40px rgba(0,0,0,0.5)">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+      <h3 id="pix-modal-title" style="margin:0;font-size:15px;color:var(--fg,#eee);display:flex;align-items:center;gap:8px">
+        <span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:4px;background:#32BCAD;color:#fff;font-family:ui-monospace,Consolas,monospace;font-size:9px;font-weight:800;letter-spacing:-0.4px">pix</span>
+        <span data-i18n="pix.title">Doar via PIX</span>
+      </h3>
+      <button id="pix-modal-close" type="button" aria-label="Fechar"
+              style="background:transparent;border:0;color:var(--muted,#888);font-size:20px;line-height:1;cursor:pointer;padding:4px 8px">×</button>
+    </div>
+
+    <!-- QR code — SVG inline pre-gerado (segno). Container branco por
+         contraste (QR precisa quiet zone clara pros leitores). -->
+    <div style="background:#fff;border-radius:6px;padding:10px;display:flex;align-items:center;justify-content:center;margin-bottom:10px">
+      <svg viewBox="0 0 57 57" style="width:100%;max-width:280px;height:auto;shape-rendering:crispEdges" xmlns="http://www.w3.org/2000/svg" aria-label="PIX QR code"><path stroke="#000" d="M2 2.5h7m2 0h1m1 0h4m5 0h2m1 0h1m1 0h2m1 0h1m1 0h1m1 0h1m2 0h1m4 0h3m3 0h7m-53 1h1m5 0h1m2 0h1m1 0h2m3 0h1m2 0h3m4 0h2m1 0h1m4 0h2m1 0h3m1 0h3m2 0h1m5 0h1m-53 1h1m1 0h3m1 0h1m1 0h1m1 0h1m3 0h1m2 0h1m2 0h1m2 0h1m1 0h6m1 0h2m1 0h1m1 0h1m2 0h1m2 0h1m2 0h1m1 0h3m1 0h1m-53 1h1m1 0h3m1 0h1m1 0h1m1 0h1m3 0h1m1 0h2m3 0h1m1 0h1m3 0h1m1 0h2m3 0h1m1 0h1m2 0h1m2 0h1m1 0h1m1 0h1m1 0h3m1 0h1m-53 1h1m1 0h3m1 0h1m1 0h2m1 0h8m3 0h1m1 0h7m1 0h2m2 0h2m2 0h3m3 0h1m1 0h3m1 0h1m-53 1h1m5 0h1m1 0h1m3 0h1m1 0h3m2 0h2m3 0h1m3 0h1m1 0h1m2 0h4m1 0h1m1 0h3m3 0h1m5 0h1m-53 1h7m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h7m-45 1h3m1 0h1m1 0h1m1 0h2m2 0h1m2 0h2m3 0h1m1 0h1m2 0h3m1 0h1m2 0h4m-44 1h1m1 0h5m2 0h6m6 0h1m2 0h5m7 0h1m2 0h1m1 0h3m2 0h5m-50 1h1m2 0h2m4 0h2m1 0h2m1 0h3m3 0h3m2 0h2m1 0h1m2 0h1m2 0h1m2 0h1m2 0h2m1 0h1m2 0h1m1 0h1m1 0h1m-53 1h1m1 0h1m1 0h3m2 0h1m2 0h3m2 0h3m1 0h1m1 0h2m2 0h1m1 0h1m4 0h1m1 0h1m1 0h4m4 0h1m1 0h1m2 0h1m-51 1h1m3 0h1m3 0h2m3 0h1m1 0h3m2 0h4m3 0h2m1 0h3m1 0h1m4 0h1m1 0h1m3 0h2m1 0h1m1 0h1m-51 1h8m2 0h2m2 0h1m1 0h3m5 0h2m1 0h1m7 0h1m2 0h1m1 0h1m1 0h2m3 0h1m1 0h2m-51 1h1m2 0h1m2 0h6m2 0h1m2 0h1m1 0h2m2 0h2m2 0h2m1 0h1m1 0h1m1 0h2m5 0h1m4 0h1m4 0h1m-53 1h1m1 0h1m1 0h1m1 0h2m2 0h1m4 0h1m1 0h5m1 0h1m1 0h3m2 0h3m1 0h7m2 0h4m1 0h1m-47 1h2m3 0h2m3 0h2m3 0h4m3 0h2m1 0h1m1 0h1m1 0h1m1 0h3m1 0h1m2 0h1m6 0h2m-48 1h2m2 0h2m3 0h1m1 0h1m1 0h4m1 0h3m2 0h1m1 0h1m4 0h1m1 0h1m2 0h1m1 0h2m1 0h4m2 0h5m-52 1h5m8 0h3m1 0h3m2 0h1m2 0h2m1 0h3m2 0h1m8 0h1m2 0h1m1 0h3m2 0h1m-51 1h2m2 0h1m4 0h3m1 0h1m3 0h1m1 0h1m4 0h2m1 0h1m1 0h1m2 0h1m1 0h4m1 0h1m1 0h1m2 0h1m3 0h2m-52 1h1m1 0h1m2 0h1m1 0h1m2 0h2m1 0h2m3 0h1m1 0h1m2 0h3m1 0h1m2 0h1m1 0h1m5 0h1m1 0h1m1 0h1m1 0h2m1 0h1m3 0h1m-51 1h2m3 0h4m1 0h2m1 0h2m3 0h1m1 0h1m5 0h2m2 0h1m1 0h5m1 0h1m2 0h3m1 0h1m1 0h3m1 0h1m-52 1h1m2 0h2m2 0h1m1 0h2m4 0h1m3 0h1m2 0h2m5 0h1m2 0h1m1 0h1m5 0h2m5 0h1m3 0h1m-47 1h1m1 0h3m2 0h1m2 0h2m1 0h2m2 0h2m1 0h2m1 0h1m2 0h8m4 0h3m1 0h1m1 0h2m-51 1h2m2 0h1m4 0h1m3 0h1m2 0h1m1 0h4m1 0h1m5 0h1m1 0h1m1 0h2m3 0h2m1 0h2m1 0h1m5 0h1m-52 1h2m1 0h6m1 0h1m1 0h8m1 0h1m1 0h9m4 0h1m1 0h1m2 0h1m1 0h8m-51 1h1m3 0h1m3 0h2m5 0h2m1 0h1m1 0h1m1 0h1m1 0h1m3 0h6m2 0h2m1 0h1m2 0h3m3 0h1m3 0h1m-49 1h1m1 0h1m1 0h2m2 0h3m1 0h1m3 0h2m2 0h1m1 0h1m1 0h3m3 0h1m1 0h3m1 0h2m2 0h1m1 0h1m1 0h1m2 0h1m-50 1h3m3 0h1m2 0h3m3 0h3m1 0h2m1 0h1m3 0h1m1 0h1m2 0h1m1 0h1m1 0h2m1 0h1m3 0h1m3 0h1m2 0h2m-52 1h1m2 0h5m3 0h2m1 0h7m1 0h6m1 0h1m5 0h2m1 0h1m2 0h10m-51 1h4m2 0h1m1 0h1m1 0h1m2 0h3m2 0h1m2 0h6m2 0h1m2 0h1m1 0h2m5 0h2m4 0h2m2 0h1m-53 1h2m1 0h1m2 0h4m3 0h1m3 0h1m1 0h4m1 0h1m3 0h2m2 0h1m1 0h1m2 0h2m2 0h1m3 0h1m1 0h3m1 0h1m-50 1h1m1 0h1m3 0h1m3 0h1m1 0h1m4 0h1m4 0h2m1 0h1m2 0h1m1 0h2m1 0h1m4 0h2m1 0h1m2 0h1m1 0h2m2 0h1m-53 1h1m1 0h2m2 0h1m1 0h1m6 0h6m3 0h1m2 0h4m2 0h2m1 0h1m1 0h2m1 0h2m1 0h2m1 0h1m2 0h1m-50 1h4m6 0h1m1 0h1m3 0h5m3 0h1m4 0h4m3 0h1m4 0h3m3 0h1m3 0h1m-52 1h6m3 0h11m6 0h1m1 0h3m2 0h1m1 0h1m2 0h1m1 0h1m1 0h3m-45 1h1m1 0h2m2 0h2m2 0h2m2 0h1m1 0h2m1 0h1m1 0h1m1 0h2m4 0h1m2 0h1m1 0h1m4 0h1m2 0h1m2 0h1m1 0h1m-47 1h1m1 0h4m1 0h1m2 0h1m1 0h1m12 0h1m2 0h2m1 0h2m1 0h2m1 0h1m2 0h1m2 0h1m1 0h1m1 0h3m-51 1h1m1 0h2m3 0h2m2 0h1m1 0h1m1 0h2m1 0h8m2 0h3m1 0h1m1 0h2m2 0h1m2 0h1m3 0h1m1 0h1m2 0h1m-52 1h1m2 0h2m1 0h1m1 0h1m1 0h1m1 0h1m2 0h1m1 0h1m1 0h2m1 0h1m1 0h2m2 0h1m2 0h1m2 0h6m1 0h1m2 0h2m2 0h1m-49 1h2m1 0h2m4 0h1m1 0h1m3 0h2m1 0h2m1 0h2m1 0h2m1 0h1m1 0h4m1 0h1m2 0h1m2 0h1m1 0h2m2 0h3m-49 1h2m2 0h1m1 0h2m1 0h3m2 0h1m1 0h3m3 0h1m5 0h1m4 0h4m1 0h2m1 0h2m2 0h1m1 0h1m1 0h2m-51 1h1m1 0h1m5 0h4m2 0h2m1 0h1m3 0h1m1 0h5m1 0h2m1 0h1m8 0h3m2 0h1m1 0h2m2 0h1m-53 1h2m1 0h6m3 0h1m2 0h1m1 0h1m1 0h2m4 0h1m2 0h1m4 0h3m1 0h2m2 0h1m2 0h2m2 0h1m1 0h2m-51 1h2m5 0h4m1 0h1m1 0h2m2 0h3m1 0h4m3 0h1m1 0h1m2 0h1m3 0h5m2 0h1m1 0h1m2 0h1m-49 1h1m2 0h1m1 0h1m2 0h1m1 0h1m1 0h1m2 0h3m3 0h5m2 0h1m1 0h2m1 0h1m1 0h1m5 0h8m-44 1h2m1 0h1m1 0h1m1 0h1m4 0h3m1 0h1m3 0h3m1 0h1m2 0h1m6 0h1m1 0h1m3 0h1m3 0h1m-53 1h7m2 0h2m1 0h3m2 0h1m2 0h2m2 0h1m1 0h1m1 0h1m1 0h1m2 0h2m1 0h1m1 0h1m2 0h1m1 0h2m1 0h1m1 0h1m2 0h1m-52 1h1m5 0h1m1 0h4m2 0h1m1 0h3m4 0h2m3 0h1m1 0h3m2 0h1m2 0h1m1 0h1m1 0h1m1 0h1m3 0h1m2 0h2m-53 1h1m1 0h3m1 0h1m1 0h1m6 0h2m1 0h4m1 0h6m1 0h1m5 0h1m2 0h1m2 0h1m1 0h8m-52 1h1m1 0h3m1 0h1m1 0h1m1 0h1m1 0h4m9 0h1m4 0h1m1 0h1m3 0h1m2 0h2m1 0h4m1 0h1m3 0h2m-53 1h1m1 0h3m1 0h1m1 0h3m1 0h1m1 0h5m1 0h1m2 0h1m3 0h3m1 0h1m1 0h1m2 0h3m2 0h1m6 0h5m-53 1h1m5 0h1m2 0h1m2 0h1m1 0h2m2 0h2m1 0h3m3 0h1m1 0h1m1 0h3m1 0h2m2 0h6m3 0h1m2 0h1m-52 1h7m1 0h1m1 0h4m2 0h4m1 0h1m2 0h2m2 0h1m4 0h4m1 0h1m3 0h1m2 0h2m1 0h3"/></svg>
+    </div>
+
+    <p style="margin:0 0 8px;font-size:12px;color:var(--muted,#888);text-align:center" data-i18n="pix.scan_hint">
+      Escaneie o QR code no seu app do banco ou use o código abaixo (Copia e Cola).
+    </p>
+
+    <!-- Copia-e-cola: textarea readonly compacta + botao copiar. -->
+    <div style="display:flex;gap:6px;margin-bottom:6px">
+      <textarea id="pix-copypaste" readonly rows="2"
+                style="flex:1;font-family:ui-monospace,Consolas,monospace;font-size:10px;background:#0a0a0a;color:var(--fg,#eee);border:1px solid var(--border,#2a2a2a);border-radius:4px;padding:6px 8px;resize:none;overflow:auto;line-height:1.3">00020126580014br.gov.bcb.pix0136a6228ec1-c293-4a94-8523-6b8b26c47e085204000053039865802BR5915EDUARDO.GABRIEL6009Sao Paulo610901227-20062210517daqr643133736513963048268</textarea>
+      <button id="pix-copy-btn" type="button"
+              style="background:#32BCAD;color:#fff;border:0;border-radius:4px;padding:0 12px;font-size:12px;cursor:pointer;font-weight:600"
+              data-i18n="pix.copy">📋 Copiar</button>
+    </div>
+    <div id="pix-copy-status" style="min-height:14px;font-size:11px;color:#66bb6a;text-align:center"></div>
+
+    <p style="margin:10px 0 0;font-size:11px;color:var(--muted,#888);text-align:center;line-height:1.4">
+      <span data-i18n="pix.recipient">Beneficiário:</span> <b>Eduardo Gabriel</b>
+    </p>
+  </div>
+</div>
 
 <!-- ============== Bulk-read progress (gate) ===========================
      Aparece durante readAll() pra:
@@ -1886,6 +1938,11 @@ const I18N = {
     'btn.connected': 'Conectado',
     'btn.bmc_tip':  'Buy Me a Coffee — apoiar o desenvolvimento',
     'btn.sponsor_tip': 'GitHub Sponsors — apoiar o desenvolvimento',
+    'btn.pix_tip':  'PIX (Brasil) — clique para exibir o QR code',
+    'pix.title':    'Doar via PIX',
+    'pix.scan_hint':'Escaneie o QR code no seu app do banco ou use o código abaixo (Copia e Cola).',
+    'pix.copy':     '📋 Copiar',
+    'pix.recipient':'Beneficiário:',
     'btn.read_all.title': 'Ler todos os campos do device (ODrive + FFB)',
     'btn.save': 'Salvar',
     'btn.save.title': 'Save unificado: 1) persiste params FFB na EEPROM emulada (sys.save!), 2) grava campos alterados em RAM, 3) desarma motor (IDLE), 4) persiste config ODrive na NVM (ss) e reboota. Motor re-arma sozinho se startup_closed_loop_control=True.',
@@ -2881,6 +2938,11 @@ const I18N = {
     'btn.connected': 'Connected',
     'btn.bmc_tip':  'Buy Me a Coffee — support development',
     'btn.sponsor_tip': 'GitHub Sponsors — support development',
+    'btn.pix_tip':  'PIX (Brazil) — click to show QR code',
+    'pix.title':    'Donate via PIX',
+    'pix.scan_hint':'Scan the QR code with your bank app or use the copy-and-paste code below.',
+    'pix.copy':     '📋 Copy',
+    'pix.recipient':'Recipient:',
     'btn.read_all.title': 'Read all device fields (ODrive + FFB)',
     'btn.save': 'Save',
     'btn.save.title': 'Unified save: 1) persists FFB params to emulated EEPROM (sys.save!), 2) writes changed fields to RAM, 3) sets motor to IDLE, 4) persists ODrive config to NVM (ss) and reboots. Motor re-arms automatically if startup_closed_loop_control=True.',
@@ -19360,6 +19422,70 @@ document.getElementById('btn-reboot').onclick = async () => {
 };
 document.getElementById('btn-export').onclick = exportJSON;
 document.getElementById('btn-import').onclick = importJSON;
+
+// ============================================================================
+// Modal PIX — abre/fecha e copia o codigo copia-e-cola.
+// Backdrop e Esc fecham. Focus vai pro botao copiar quando abre.
+// ============================================================================
+(function initPixModal() {
+  const modal   = document.getElementById('pix-modal');
+  const openBtn = document.getElementById('btn-pix-open');
+  const closeBtn= document.getElementById('pix-modal-close');
+  const copyBtn = document.getElementById('pix-copy-btn');
+  const copyTa  = document.getElementById('pix-copypaste');
+  const status  = document.getElementById('pix-copy-status');
+  if (!modal || !openBtn) return;
+
+  function isOpen() { return modal.style.display === 'flex'; }
+  function open() {
+    modal.style.display = 'flex';
+    modal.setAttribute('aria-hidden', 'false');
+    if (status) status.textContent = '';
+    setTimeout(() => copyBtn && copyBtn.focus(), 0);
+  }
+  function close() {
+    modal.style.display = 'none';
+    modal.setAttribute('aria-hidden', 'true');
+    openBtn.focus();
+  }
+
+  openBtn.addEventListener('click', open);
+  closeBtn && closeBtn.addEventListener('click', close);
+
+  // Clique fora do card fecha. Só o próprio backdrop dispara — target === modal.
+  modal.addEventListener('click', (e) => { if (e.target === modal) close(); });
+
+  // Esc fecha (só quando o modal esta aberto).
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && isOpen()) close();
+  });
+
+  // Copiar: prefere navigator.clipboard (funciona em http/https contexts
+  // seguros), fallback pra select+execCommand pra ambientes antigos ou
+  // file:// onde clipboard API pode falhar silenciosamente.
+  copyBtn && copyBtn.addEventListener('click', async () => {
+    const txt = (copyTa && copyTa.value) || '';
+    let ok = false;
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(txt);
+        ok = true;
+      }
+    } catch { /* cai no fallback */ }
+    if (!ok && copyTa) {
+      try {
+        copyTa.focus();
+        copyTa.select();
+        ok = document.execCommand && document.execCommand('copy');
+      } catch { ok = false; }
+    }
+    if (status) {
+      status.textContent = ok ? '✓ Copiado' : '✕ Falhou — selecione manualmente';
+      status.style.color = ok ? '#66bb6a' : '#ef5350';
+      setTimeout(() => { if (status) status.textContent = ''; }, 2500);
+    }
+  });
+})();
 document.getElementById('file-import').onchange = (e) => {
   if (e.target.files[0]) {
     doImport(e.target.files[0]);
